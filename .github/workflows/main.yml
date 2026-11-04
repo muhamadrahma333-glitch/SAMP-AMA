@@ -1,5 +1,8 @@
 name: Build
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -9,27 +12,33 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Find and Build
+      - name: Setup Gradle 7.5
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.5
+      - name: Build APK
         run: |
-          echo "Cari build.gradle..."
-          find . -type f -name "build.gradle*" | head -20
           ls -la
-          # cari folder yang ada settings.gradle
-          DIR=$(find . -name "settings.gradle*" -exec dirname {} \; | head -n1)
-          if [ -z "$DIR" ]; then
-            DIR=$(find . -name "build.gradle*" -exec dirname {} \; | head -n1)
-          fi
-          echo "Build dir: $DIR"
-          cd $DIR
-          chmod +x gradlew || true
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug
+          # kalau ada folder dalem SAMP-AMA, masuk kesitu
+          if [ -d "SAMP-AMA" ]; then cd SAMP-AMA; fi
+          if [ -f "settings.gradle" ] || [ -f "settings.gradle.kts" ]; then
+            echo "Found gradle project at $(pwd)"
           else
-            gradle wrapper --gradle-version 7.5
-            ./gradlew assembleDebug
+            # cari dimana settings.gradle berada
+            TARGET=$(find .. -name "settings.gradle*" | head -n1 | xargs dirname)
+            if [ -n "$TARGET" ]; then cd $TARGET; fi
           fi
-      - name: Upload
+          ls -la
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleDebug --stacktrace
+          else
+            gradle assembleDebug --stacktrace
+          fi
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SAMP-FIX
-          path: "**/app/build/outputs/apk/debug/*.apk"
+          name: SAMP-AMA-Fix-Android9
+          path: |
+            **/app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/debug/*.apk
