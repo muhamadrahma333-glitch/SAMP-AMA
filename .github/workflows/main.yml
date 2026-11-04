@@ -1,27 +1,27 @@
 name: Build
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 11
-      - name: Setup Gradle 7.2
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: 7.2
+          java-version: 17
+      - name: Install JS
+        run: |
+          yarn install || npm install
       - name: Build APK
         run: |
-          ls -la
-          ls -la android
           cd android
-          gradle assembleDebug --stacktrace
+          chmod +x gradlew
+          ./gradlew assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
