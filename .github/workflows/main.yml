@@ -1,39 +1,31 @@
-name: Build SAMP APK Fix Android 9
+name: Build SAMP APK
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-          
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        
-      - name: Grant Permission
-        run: chmod +x ./gradlew
-        
-      - name: Fix Manifest for Android 9
-        run: |
-          sed -i 's/targetSdkVersion 34/targetSdkVersion 28/g' app/build.gradle
-          sed -i 's/targetSdkVersion 33/targetSdkVersion 28/g' app/build.gradle
-          echo "Fix target SDK to 28 for Android 9"
 
-      - name: Build APK 32-bit
-        run: ./gradlew assembleRelease --stacktrace
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Touch-Mobile-Android9-Fix
-          path: app/build/outputs/apk/release/app-release.apk
+          name: SAMP-Android9-Fix
+          path: app/build/outputs/apk/release/*.apk
