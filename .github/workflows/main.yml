@@ -1,29 +1,35 @@
 name: Build
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-
-      - name: Build APK
-        run: gradle assembleDebug
-
+      - name: Find and Build
+        run: |
+          echo "Cari build.gradle..."
+          find . -type f -name "build.gradle*" | head -20
+          ls -la
+          # cari folder yang ada settings.gradle
+          DIR=$(find . -name "settings.gradle*" -exec dirname {} \; | head -n1)
+          if [ -z "$DIR" ]; then
+            DIR=$(find . -name "build.gradle*" -exec dirname {} \; | head -n1)
+          fi
+          echo "Build dir: $DIR"
+          cd $DIR
+          chmod +x gradlew || true
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            gradle wrapper --gradle-version 7.5
+            ./gradlew assembleDebug
+          fi
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: SAMP-Fix-Android9
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: SAMP-FIX
+          path: "**/app/build/outputs/apk/debug/*.apk"
