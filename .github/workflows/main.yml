@@ -8,37 +8,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-      - name: Setup Gradle 7.5
+          java-version: 11
+      - name: Setup Gradle 7.2
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 7.5
+          gradle-version: 7.2
       - name: Build APK
         run: |
+          pwd
           ls -la
-          # kalau ada folder dalem SAMP-AMA, masuk kesitu
-          if [ -d "SAMP-AMA" ]; then cd SAMP-AMA; fi
-          if [ -f "settings.gradle" ] || [ -f "settings.gradle.kts" ]; then
-            echo "Found gradle project at $(pwd)"
-          else
-            # cari dimana settings.gradle berada
-            TARGET=$(find .. -name "settings.gradle*" | head -n1 | xargs dirname)
-            if [ -n "$TARGET" ]; then cd $TARGET; fi
-          fi
+          ls -la SAMP-AMA/
+          cd SAMP-AMA/SAMP-AMA/android
+          pwd
           ls -la
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug --stacktrace
-          else
-            gradle assembleDebug --stacktrace
-          fi
+          cat settings.gradle
+          gradle assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SAMP-AMA-Fix-Android9
-          path: |
-            **/app/build/outputs/apk/debug/*.apk
-            **/build/outputs/apk/debug/*.apk
+          path: "**/app/build/outputs/apk/debug/*.apk"
